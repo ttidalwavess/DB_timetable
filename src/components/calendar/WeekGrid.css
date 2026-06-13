@@ -1,0 +1,73 @@
+.week-grid-wrap { overflow-x: auto; }
+
+.week-grid {
+  border-collapse: collapse;
+  min-width: 760px;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.wg-gutter {
+  width: 72px;
+  min-width: 72px;
+  border: none;
+  background: #fff;
+}
+
+.wg-day-header {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gc-muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  padding: 10px 8px 8px;
+  border-left: 1px solid var(--gc-border);
+  border-bottom: 1px solid var(--gc-border);
+  text-align: center;
+  background: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.wg-row { }
+
+.wg-time-cell {
+  vertical-align: top;
+  padding: 6px 8px 0 0;
+  text-align: right;
+  background: #fff;
+  border-top: 1px solid var(--gc-border);
+  white-space: nowrap;
+}
+
+.wg-slot-num {
+  display: block;
+  font-size: 20px;
+  font-weight: 300;
+  color: var(--gc-muted);
+  line-height: 1;
+}
+
+.wg-slot-time {
+  display: block;
+  font-size: 10px;
+  color: #bdc1c6;
+  line-height: 1.5;
+  margin-top: 2px;
+}
+
+.wg-cell {
+  vertical-align: top;
+  border-left: 1px solid var(--gc-border);
+  border-top: 1px solid var(--gc-border);
+  padding: 4px;
+  min-height: 64px;
+  min-width: 110px;
+  background: #fff;
+  transition: background .1s;
+}
+
+.wg-cell:hover { background: var(--gc-hover); }
+.wg-cell.has-events { background: #fff; }
+.wg-cell.has-events:hover { background: var(--gc-hover); }
