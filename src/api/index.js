@@ -1,15 +1,33 @@
 /**
  * api/index.js — единственный файл для замены когда придёт бэкенд.
  * Когда API будет готово — заменить тела функций на fetch('/api/...').
+ *
+ * ДОБАВЛЕНО к исходной версии:
+ *  - checkConflicts(): пересечения по времени (группа / преподаватель /
+ *    аудитория уже заняты) + лимит 5 пар/день (для группы и преподавателя).
+ *    Раньше проверялись только тип аудитории, вместимость и переход
+ *    между корпусами — теперь покрыты все 4 пункта из требований.
+ *  - createLesson / updateLesson / deleteLesson — мутации мок-массива LESSONS.
+ *  - copyScheduleLessons — копирование занятий в новое расписание.
  */
 import {
   SLOTS, DAYS_OF_WEEK, STUDY_GROUPS, TEACHERS, ROOMS, BUILDINGS,
   ROOM_TYPE_LABELS, TEACHER_ASSIGNMENTS, LESSONS, SESSION_LESSONS,
-  BUILDING_DISTANCES, CURRICULUM_SUBJECTS, SUBJECTS,
+  BUILDING_DISTANCES, CURRICULUM_SUBJECTS, SUBJECTS, SCHEDULES,
   filterLessons, filterSessionLessons, enrichLesson, teacherShortName,
 } from "../data/mockData";
 
+import {
+  weekParityOverlaps,
+  SLOT_BREAKS,
+} from "../utils/lessonValidation";
+
 const delay = (ms = 150) => new Promise(r => setTimeout(r, ms));
+
+const DAY_LIMIT = 5;
+
+// Автоинкремент id для новых занятий в мок-данных
+let nextLessonId = Math.max(0, ...LESSONS.map(l => l.lesson_id)) + 1;
 
 export const api = {
   getSlots:       async () => { await delay(); return SLOTS; },
@@ -19,6 +37,11 @@ export const api = {
   getRooms:       async () => { await delay(); return ROOMS; },
   getBuildings:   async () => { await delay(); return BUILDINGS; },
   getSubjects:    async () => { await delay(); return SUBJECTS; },
+  getTeacherAssignments: async () => { await delay(); return TEACHER_ASSIGNMENTS; },
+  getBuildingDistances:  async () => { await delay(); return BUILDING_DISTANCES; },
+  getCurriculumSubjects: async () => { await delay(); return CURRICULUM_SUBJECTS; },
+  getSchedules:   async () => { await delay(); return SCHEDULES; },
+  
 
   getLessons: async (filters = {}) => {
     await delay(200);
@@ -71,12 +94,10 @@ export const api = {
         assignments.some(a => a.assignment_id === l.assignment_id)
       ).map(enrichLesson);
 
-      // считаем пары по дням для проверки лимита 5 пар/день
       const byDay = {};
       DAYS_OF_WEEK.forEach(d => { byDay[d.id] = lessons.filter(l => l.day_of_week === d.id).length; });
       const maxPerDay = Math.max(0, ...Object.values(byDay));
 
-      // считаем по предметам
       const bySubject = {};
       lessons.forEach(l => {
         const key = l.subjectName;
@@ -91,46 +112,138 @@ export const api = {
         lessons,
         total: lessons.length,
         maxPerDay,
-        overLimit: maxPerDay > 5,
+        overLimit: maxPerDay > DAY_LIMIT,
         byDay,
         bySubject: Object.values(bySubject),
       };
     });
   },
 
-  // Проверка конфликтов для одного занятия (подсветка на фронте)
   checkConflicts: async (lesson) => {
     await delay(50);
     const conflicts = [];
-    const room = ROOMS.find(r => r.room_id === lesson.room_id);
+    const room  = ROOMS.find(r => r.room_id === lesson.room_id);
     const group = STUDY_GROUPS.find(g => g.study_group_id === lesson.study_group_id);
+    const assignment = TEACHER_ASSIGNMENTS.find(a => a.assignment_id === lesson.assignment_id);
 
-    // 1. Тип помещения для LAB
     if (lesson.lesson_type === "LAB" && room && !["LABORATORY","COMPUTER"].includes(room.room_type)) {
-      conflicts.push({ code: "WRONG_ROOM_TYPE", text: `Лаб. работа в ${ROOM_TYPE_LABELS[room.room_type] || room.room_type} — нужна лаборатория или комп. класс` });
+      conflicts.push({
+        code: "WRONG_ROOM_TYPE",
+        text: `Лаб. работа в ${ROOM_TYPE_LABELS[room.room_type] || room.room_type} — нужна лаборатория или комп. класс`,
+      });
     }
 
-    // 2. Вместимость
     if (room && group && !room.is_online && group.student_count > room.capacity) {
-      conflicts.push({ code: "CAPACITY_EXCEEDED", text: `Студентов ${group.student_count}, мест ${room.capacity}` });
+      conflicts.push({
+        code: "CAPACITY_EXCEEDED",
+        text: `Студентов ${group.student_count}, мест ${room.capacity}`,
+      });
     }
 
-    // 3. Время перехода между корпусами (предыдущая пара группы)
-    if (lesson.slot_id > 1 && lesson.day_of_week) {
+    // Пересечения по времени (группа / преподаватель / аудитория) ─
+    // Для еженедельных занятий сравниваем по (day_of_week, slot_id, week_parity).
+    // Для разовых (экзамен/зачёт/консультация) — по (specific_date, slot_id).
+    const others = LESSONS.filter(l => l.lesson_id !== lesson.lesson_id);
+
+    const overlapsInTime = (l) => {
+      if (lesson.is_recurring) {
+        if (!l.is_recurring) return false;
+        return l.day_of_week === lesson.day_of_week
+          && l.slot_id === lesson.slot_id
+          && weekParityOverlaps(l.week_parity, lesson.week_parity || "BOTH");
+      } else {
+        if (l.is_recurring) return false;
+        return l.specific_date === lesson.specific_date
+          && l.slot_id === lesson.slot_id;
+      }
+    };
+
+    const groupConflict = others.find(l =>
+      l.study_group_id === lesson.study_group_id && overlapsInTime(l)
+    );
+    if (groupConflict) {
+      conflicts.push({
+        code: "GROUP_CONFLICT",
+        text: `Группа уже занята в это время (${groupConflict.subjectName || "другое занятие"})`,
+      });
+    }
+
+    if (assignment) {
+      const teacherConflict = others.find(l => {
+        const a = TEACHER_ASSIGNMENTS.find(x => x.assignment_id === l.assignment_id);
+        return a && a.teacher_id === assignment.teacher_id && overlapsInTime(l);
+      });
+      if (teacherConflict) {
+        conflicts.push({
+          code: "TEACHER_CONFLICT",
+          text: `Преподаватель уже ведёт занятие в это время (${teacherConflict.subjectName || "другая группа"})`,
+        });
+      }
+    }
+
+    if (room && !room.is_online) {
+      const roomConflict = others.find(l =>
+        l.room_id === lesson.room_id && overlapsInTime(l)
+      );
+      if (roomConflict) {
+        conflicts.push({
+          code: "ROOM_CONFLICT",
+          text: `Аудитория ${room.room_number} уже занята в это время`,
+        });
+      }
+    }
+
+    if (lesson.is_recurring && lesson.day_of_week) {
+      const groupDayCount = others.filter(l =>
+        l.is_recurring &&
+        l.study_group_id === lesson.study_group_id &&
+        l.day_of_week === lesson.day_of_week &&
+        weekParityOverlaps(l.week_parity, lesson.week_parity || "BOTH")
+      ).length;
+
+      if (groupDayCount + 1 > DAY_LIMIT) {
+        conflicts.push({
+          code: "GROUP_DAY_LIMIT",
+          text: `У группы превышен лимит ${DAY_LIMIT} пар в день (уже ${groupDayCount})`,
+        });
+      }
+
+      if (assignment) {
+        const teacherAssignmentIds = TEACHER_ASSIGNMENTS
+          .filter(a => a.teacher_id === assignment.teacher_id)
+          .map(a => a.assignment_id);
+
+        const teacherDayCount = others.filter(l =>
+          l.is_recurring &&
+          teacherAssignmentIds.includes(l.assignment_id) &&
+          l.day_of_week === lesson.day_of_week &&
+          weekParityOverlaps(l.week_parity, lesson.week_parity || "BOTH")
+        ).length;
+
+        if (teacherDayCount + 1 > DAY_LIMIT) {
+          conflicts.push({
+            code: "TEACHER_DAY_LIMIT",
+            text: `У преподавателя превышен лимит ${DAY_LIMIT} пар в день (уже ${teacherDayCount})`,
+          });
+        }
+      }
+    }
+
+    if (lesson.is_recurring && lesson.slot_id > 1 && lesson.day_of_week) {
       const prevLesson = LESSONS.find(l =>
+        l.lesson_id !== lesson.lesson_id &&
         l.study_group_id === lesson.study_group_id &&
         l.day_of_week === lesson.day_of_week &&
         l.slot_id === lesson.slot_id - 1 &&
-        l.lesson_id !== lesson.lesson_id
+        weekParityOverlaps(l.week_parity, lesson.week_parity || "BOTH")
       );
-      if (prevLesson) {
+      if (prevLesson && room && !room.is_online) {
         const prevRoom = ROOMS.find(r => r.room_id === prevLesson.room_id);
-        if (prevRoom && room && prevRoom.building_id !== room.building_id) {
+        if (prevRoom && !prevRoom.is_online && prevRoom.building_id !== room.building_id) {
           const dist = BUILDING_DISTANCES.find(d =>
             d.from_building_id === prevRoom.building_id && d.to_building_id === room.building_id
           );
-          const slotBreaks = { 2:10, 3:10, 4:10, 5:10 }; // минут перерыва между парами
-          const breakMin = slotBreaks[lesson.slot_id] || 10;
+          const breakMin = SLOT_BREAKS[lesson.slot_id] ?? 10;
           if (dist && dist.travel_minutes > breakMin) {
             conflicts.push({
               code: "TRAVEL_TIME",
@@ -142,5 +255,95 @@ export const api = {
     }
 
     return conflicts;
+  },
+
+  createLesson: async (lesson) => {
+    await delay(150);
+    const conflicts = await api.checkConflicts({ ...lesson, lesson_id: null });
+    const blocking = conflicts.filter(c =>
+      ["GROUP_CONFLICT","TEACHER_CONFLICT","ROOM_CONFLICT","CAPACITY_EXCEEDED",
+       "WRONG_ROOM_TYPE","GROUP_DAY_LIMIT","TEACHER_DAY_LIMIT","TRAVEL_TIME"].includes(c.code)
+    );
+    if (blocking.length) {
+      const err = new Error("CONFLICTS");
+      err.conflicts = blocking;
+      throw err;
+    }
+
+    const newLesson = { ...lesson, lesson_id: nextLessonId++ };
+    LESSONS.push(newLesson);
+    return enrichLesson(newLesson);
+  },
+
+  updateLesson: async (lessonId, patch) => {
+    await delay(150);
+    const idx = LESSONS.findIndex(l => l.lesson_id === lessonId);
+    if (idx === -1) throw new Error("Занятие не найдено");
+
+    const candidate = { ...LESSONS[idx], ...patch, lesson_id: lessonId };
+    const conflicts = await api.checkConflicts(candidate);
+    const blocking = conflicts.filter(c =>
+      ["GROUP_CONFLICT","TEACHER_CONFLICT","ROOM_CONFLICT","CAPACITY_EXCEEDED",
+       "WRONG_ROOM_TYPE","GROUP_DAY_LIMIT","TEACHER_DAY_LIMIT","TRAVEL_TIME"].includes(c.code)
+    );
+    if (blocking.length) {
+      const err = new Error("CONFLICTS");
+      err.conflicts = blocking;
+      throw err;
+    }
+
+    LESSONS[idx] = candidate;
+    return enrichLesson(candidate);
+  },
+
+  deleteLesson: async (lessonId) => {
+    await delay(150);
+    const idx = LESSONS.findIndex(l => l.lesson_id === lessonId);
+    if (idx === -1) return { ok: false };
+    LESSONS.splice(idx, 1);
+    return { ok: true };
+  },
+
+
+  copySchedule: async ({ sourceScheduleId, name, academicYear, semesterNumber }) => {
+    await delay(300);
+
+    if (!name || !name.trim()) {
+      const err = new Error("VALIDATION");
+      err.fieldErrors = { name: "Введите название нового расписания" };
+      throw err;
+    }
+
+    const nameTaken = SCHEDULES.some(s => s.schedule_name.trim().toLowerCase() === name.trim().toLowerCase());
+    if (nameTaken) {
+      const err = new Error("VALIDATION");
+      err.fieldErrors = { name: "Расписание с таким названием уже существует" };
+      throw err;
+    }
+
+    const source = SCHEDULES.find(s => s.schedule_id === sourceScheduleId);
+    if (!source) throw new Error("Исходное расписание не найдено");
+
+    const newScheduleId = Math.max(0, ...SCHEDULES.map(s => s.schedule_id)) + 1;
+    const newSchedule = {
+      ...source,
+      schedule_id: newScheduleId,
+      schedule_name: name.trim(),
+      academic_year: academicYear ?? source.academic_year,
+      semester_number: semesterNumber ?? source.semester_number,
+      is_active: false,
+      copied_from_id: source.schedule_id,
+    };
+    SCHEDULES.push(newSchedule);
+
+    const sourceLessons = LESSONS.filter(l => l.schedule_id === sourceScheduleId);
+    const copies = sourceLessons.map(l => ({
+      ...l,
+      lesson_id: nextLessonId++,
+      schedule_id: newScheduleId,
+    }));
+    LESSONS.push(...copies);
+
+    return { schedule: newSchedule, copiedLessonsCount: copies.length };
   },
 };

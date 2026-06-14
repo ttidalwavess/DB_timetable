@@ -4,6 +4,7 @@
  * Когда API будет готово — заменить только src/api/*.js, остальное не трогать.
  */
 
+
 // ── slot (расписание звонков) ─────────────────────────────────
 export const SLOTS = [
   { slot_id: 1, slot_number: 1, time_start: "08:30", time_end: "10:00" },
@@ -28,6 +29,7 @@ export const SCHOOLS = [
   { school_id: 1, school_name: "Школа цифровой экономики" },
   { school_id: 2, school_name: "Институт математики и компьютерных технологий" },
 ];
+
 
 // ── department ────────────────────────────────────────────────
 export const DEPARTMENTS = [
@@ -174,8 +176,10 @@ export const SCHEDULES = [
     date_end:   "2025-06-30",
     week_count: 18,
     is_active: true,
+    copied_from_id: null,
   },
 ];
+
 
 // ── lesson_type labels & colors ───────────────────────────────
 export const LESSON_TYPES = {

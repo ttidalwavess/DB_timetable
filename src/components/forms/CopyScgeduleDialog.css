@@ -1,0 +1,21 @@
+/* src/components/forms/CopyScheduleDialog.css */
+
+.csd-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 340px;
+}
+
+.csd-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gc-text);
+  margin: 0;
+}
+
+.csd-source {
+  font-size: 13px;
+  color: var(--gc-muted);
+  margin: 0;
+}

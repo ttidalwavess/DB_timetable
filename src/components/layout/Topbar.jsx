@@ -7,6 +7,7 @@ const LINKS = [
   { to: "/session",   label: "Сессия"     },
   { to: "/rooms",     label: "Аудитории"  },
   { to: "/teachers",  label: "Преподаватели" },
+  { to: "/admin/references",  label: "Админ" },
 ];
 
 export default function Topbar() {
