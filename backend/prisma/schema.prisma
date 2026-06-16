@@ -1,13 +1,305 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider        = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model academic_group {
+  group_id           Int              @id @default(autoincrement())
+  group_name         String           @unique @db.VarChar(20)
+  program_id         Int
+  year_of_enrollment Int              @db.SmallInt
+  created_at         DateTime?        @default(now()) @db.Timestamp(6)
+  training_program   training_program @relation(fields: [program_id], references: [program_id], onUpdate: NoAction)
+  study_group        study_group[]
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model building {
+  building_id                                                    Int                 @id @default(autoincrement())
+  building_name                                                  String              @unique @db.VarChar(50)
+  address                                                        String?             @db.VarChar(200)
+  created_at                                                     DateTime?           @default(now()) @db.Timestamp(6)
+  building_distance_building_distance_from_building_idTobuilding building_distance[] @relation("building_distance_from_building_idTobuilding")
+  building_distance_building_distance_to_building_idTobuilding   building_distance[] @relation("building_distance_to_building_idTobuilding")
+  room                                                           room[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model building_distance {
+  from_building_id                                      Int
+  to_building_id                                        Int
+  travel_minutes                                        Int      @db.SmallInt
+  building_building_distance_from_building_idTobuilding building @relation("building_distance_from_building_idTobuilding", fields: [from_building_id], references: [building_id], onDelete: Cascade, onUpdate: NoAction)
+  building_building_distance_to_building_idTobuilding   building @relation("building_distance_to_building_idTobuilding", fields: [to_building_id], references: [building_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([from_building_id, to_building_id])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model calendar_day {
+  calendar_date DateTime @id @db.Date
+  day_of_week   Int      @db.SmallInt
+  is_working    Boolean  @default(true)
+  day_type      String   @db.VarChar(20)
+  week_number   Int      @db.SmallInt
+  week_parity   String   @db.VarChar(4)
+  holiday_name  String?  @db.VarChar(100)
+
+  @@index([week_number, week_parity], map: "idx_cd_week")
+  @@index([is_working, day_of_week], map: "idx_cd_working")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model curriculum {
+  curriculum_id      Int                  @id @default(autoincrement())
+  program_id         Int
+  year_number        Int                  @db.SmallInt
+  semester_number    Int                  @db.SmallInt
+  created_at         DateTime?            @default(now()) @db.Timestamp(6)
+  training_program   training_program     @relation(fields: [program_id], references: [program_id], onUpdate: NoAction)
+  curriculum_subject curriculum_subject[]
+  schedule           schedule[]
+
+  @@unique([program_id, year_number, semester_number])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model curriculum_subject {
+  subj_id            Int                  @id @default(autoincrement())
+  curriculum_id      Int
+  subject_id         Int
+  lecture_hours      Int                  @default(0) @db.SmallInt
+  practice_hours     Int                  @default(0) @db.SmallInt
+  lab_hours          Int                  @default(0) @db.SmallInt
+  report_type        String               @db.VarChar(10)
+  credit_units       Decimal              @db.Decimal(4, 1)
+  created_at         DateTime?            @default(now()) @db.Timestamp(6)
+  curriculum         curriculum           @relation(fields: [curriculum_id], references: [curriculum_id], onUpdate: NoAction)
+  subject            subject              @relation(fields: [subject_id], references: [subject_id], onUpdate: NoAction)
+  lesson             lesson[]
+  teacher_assignment teacher_assignment[]
+
+  @@unique([curriculum_id, subject_id])
+  @@index([curriculum_id], map: "idx_cs_curriculum")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model department {
+  department_id    Int                @id @default(autoincrement())
+  department_name  String             @db.VarChar(150)
+  school_id        Int
+  created_at       DateTime?          @default(now()) @db.Timestamp(6)
+  school           school             @relation(fields: [school_id], references: [school_id], onUpdate: NoAction)
+  teacher          teacher[]
+  training_program training_program[]
+
+  @@unique([department_name, school_id])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model lesson {
+  lesson_id          Int                @id @default(autoincrement())
+  schedule_id        Int
+  study_group_id     Int
+  subj_id            Int
+  assignment_id      Int
+  room_id            Int
+  slot_id            Int                @db.SmallInt
+  lesson_type        String             @db.VarChar(12)
+  day_of_week        Int?               @db.SmallInt
+  week_parity        String?            @default("BOTH") @db.VarChar(4)
+  is_recurring       Boolean            @default(true)
+  specific_date      DateTime?          @db.Date
+  location_type      String             @default("ROOM") @db.VarChar(10)
+  is_transfer        Boolean            @default(false)
+  created_at         DateTime?          @default(now()) @db.Timestamp(6)
+  teacher_assignment teacher_assignment @relation(fields: [assignment_id], references: [assignment_id], onUpdate: NoAction)
+  room               room               @relation(fields: [room_id], references: [room_id], onUpdate: NoAction)
+  schedule           schedule           @relation(fields: [schedule_id], references: [schedule_id], onDelete: Cascade, onUpdate: NoAction)
+  slot               slot               @relation(fields: [slot_id], references: [slot_id], onUpdate: NoAction)
+  study_group        study_group        @relation(fields: [study_group_id], references: [study_group_id], onUpdate: NoAction)
+  curriculum_subject curriculum_subject @relation(fields: [subj_id], references: [subj_id], onUpdate: NoAction)
+  transfer           transfer[]
+
+  @@index([specific_date], map: "idx_lesson_date")
+  @@index([schedule_id, study_group_id, day_of_week, slot_id, week_parity], map: "idx_lesson_group_time")
+  @@index([schedule_id, room_id, day_of_week, slot_id, week_parity], map: "idx_lesson_room_time")
+  @@index([schedule_id], map: "idx_lesson_schedule")
+  @@index([schedule_id, assignment_id, day_of_week, slot_id, week_parity], map: "idx_lesson_teacher_time")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model room {
+  room_id     Int        @id @default(autoincrement())
+  room_number String     @db.VarChar(20)
+  room_type   String     @db.VarChar(20)
+  capacity    Int        @db.SmallInt
+  building_id Int
+  is_online   Boolean    @default(false)
+  created_at  DateTime?  @default(now()) @db.Timestamp(6)
+  lesson      lesson[]
+  building    building   @relation(fields: [building_id], references: [building_id], onUpdate: NoAction)
+  transfer    transfer[]
+
+  @@unique([room_number, building_id])
+  @@index([building_id], map: "idx_room_building")
+  @@index([room_type], map: "idx_room_type")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model schedule {
+  schedule_id     Int        @id @default(autoincrement())
+  schedule_name   String     @db.VarChar(100)
+  curriculum_id   Int
+  academic_year   Int        @db.SmallInt
+  semester_number Int        @db.SmallInt
+  date_start      DateTime   @db.Date
+  date_end        DateTime   @db.Date
+  week_count      Int        @db.SmallInt
+  is_active       Boolean    @default(false)
+  copied_from_id  Int?
+  created_at      DateTime?  @default(now()) @db.Timestamp(6)
+  lesson          lesson[]
+  schedule        schedule?  @relation("scheduleToschedule", fields: [copied_from_id], references: [schedule_id], onDelete: NoAction, onUpdate: NoAction)
+  other_schedule  schedule[] @relation("scheduleToschedule")
+  curriculum      curriculum @relation(fields: [curriculum_id], references: [curriculum_id], onUpdate: NoAction)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model school {
+  school_id   Int          @id @default(autoincrement())
+  school_name String       @unique @db.VarChar(150)
+  created_at  DateTime?    @default(now()) @db.Timestamp(6)
+  department  department[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model slot {
+  slot_id            Int                  @id @db.SmallInt
+  slot_number        Int                  @unique @db.SmallInt
+  time_start         DateTime             @db.Time(6)
+  time_end           DateTime             @db.Time(6)
+  lesson             lesson[]
+  teacher_preference teacher_preference[]
+  transfer           transfer[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model study_group {
+  study_group_id    Int            @id @default(autoincrement())
+  study_group_name  String         @unique @db.VarChar(50)
+  group_type        String         @db.VarChar(10)
+  student_count     Int            @db.SmallInt
+  academic_group_id Int
+  created_at        DateTime?      @default(now()) @db.Timestamp(6)
+  lesson            lesson[]
+  academic_group    academic_group @relation(fields: [academic_group_id], references: [group_id], onUpdate: NoAction)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model subject {
+  subject_id         Int                  @id @default(autoincrement())
+  subject_name       String               @unique @db.VarChar(150)
+  description        String?
+  created_at         DateTime?            @default(now()) @db.Timestamp(6)
+  curriculum_subject curriculum_subject[]
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model teacher {
+  teacher_id         Int                  @id @default(autoincrement())
+  last_name          String               @db.VarChar(50)
+  first_name         String               @db.VarChar(50)
+  middle_name        String?              @db.VarChar(50)
+  department_id      Int
+  academic_degree    String?              @db.VarChar(50)
+  academic_rank      String?              @db.VarChar(50)
+  position           String               @db.VarChar(80)
+  created_at         DateTime?            @default(now()) @db.Timestamp(6)
+  department         department           @relation(fields: [department_id], references: [department_id], onUpdate: NoAction)
+  teacher_assignment teacher_assignment[]
+  teacher_preference teacher_preference[]
+
+  @@index([department_id], map: "idx_teacher_department")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model teacher_assignment {
+  assignment_id      Int                @id @default(autoincrement())
+  teacher_id         Int
+  subj_id            Int
+  lesson_types       String             @db.VarChar(60)
+  created_at         DateTime?          @default(now()) @db.Timestamp(6)
+  lesson             lesson[]
+  curriculum_subject curriculum_subject @relation(fields: [subj_id], references: [subj_id], onUpdate: NoAction)
+  teacher            teacher            @relation(fields: [teacher_id], references: [teacher_id], onUpdate: NoAction)
+
+  @@unique([teacher_id, subj_id])
+  @@index([subj_id], map: "idx_ta_subject")
+  @@index([teacher_id], map: "idx_ta_teacher")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model teacher_preference {
+  pref_id         Int       @id @default(autoincrement())
+  teacher_id      Int
+  day_of_week     Int?      @db.SmallInt
+  slot_id         Int?      @db.SmallInt
+  preference_type String    @db.VarChar(6)
+  created_at      DateTime? @default(now()) @db.Timestamp(6)
+  slot            slot?     @relation(fields: [slot_id], references: [slot_id], onDelete: NoAction, onUpdate: NoAction)
+  teacher         teacher   @relation(fields: [teacher_id], references: [teacher_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([teacher_id], map: "idx_pref_teacher")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model training_program {
+  program_id     Int              @id @default(autoincrement())
+  program_name   String           @db.VarChar(150)
+  degree_level   String           @db.VarChar(20)
+  duration_years Int              @db.SmallInt
+  department_id  Int
+  created_at     DateTime?        @default(now()) @db.Timestamp(6)
+  academic_group academic_group[]
+  curriculum     curriculum[]
+  department     department       @relation(fields: [department_id], references: [department_id], onUpdate: NoAction, map: "fk_program_department")
+
+  @@index([department_id], map: "idx_program_department")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model transfer {
+  transfer_id        Int       @id @default(autoincrement())
+  original_lesson_id Int
+  original_date      DateTime  @db.Date
+  new_date           DateTime  @db.Date
+  new_slot_id        Int       @db.SmallInt
+  new_room_id        Int?
+  reason             String?   @db.VarChar(200)
+  status             String    @default("PENDING") @db.VarChar(10)
+  created_at         DateTime? @default(now()) @db.Timestamp(6)
+  room               room?     @relation(fields: [new_room_id], references: [room_id], onDelete: NoAction, onUpdate: NoAction)
+  slot               slot      @relation(fields: [new_slot_id], references: [slot_id], onDelete: NoAction, onUpdate: NoAction)
+  lesson             lesson    @relation(fields: [original_lesson_id], references: [lesson_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([original_lesson_id], map: "idx_transfer_lesson")
+  @@index([status], map: "idx_transfer_status")
 }
