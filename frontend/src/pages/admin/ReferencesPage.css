@@ -1,0 +1,80 @@
+.refs-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+.refs-tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--gc-border);
+  padding-bottom: 10px;
+}
+
+.refs-state {
+  padding: 40px;
+  text-align: center;
+}
+
+.refs-body {
+  background: #fff;
+}
+
+/* ── Таблицы справочников ───────────────────────────────────────────── */
+.refs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.refs-table th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--gc-muted);
+  font-size: 12px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--gc-border);
+}
+.refs-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--gc-border);
+}
+.refs-table tbody tr:hover {
+  background: var(--gc-hover);
+}
+.text-center { text-align: center; }
+
+.refs-row-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.refs-row-actions .btn-ghost {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+/* ── Дерево подразделений ────────────────────────────────────────────── */
+.refs-tree-school {
+  border: 1px solid var(--gc-border);
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.refs-tree-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+}
+.refs-tree-school-row {
+  background: var(--gc-surface);
+  font-weight: 600;
+}
+.refs-tree-dep-row {
+  padding-left: 28px;
+  border-top: 1px solid var(--gc-border);
+}
+.refs-tree-name {
+  font-size: 13px;
+}

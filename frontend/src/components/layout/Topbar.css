@@ -1,0 +1,61 @@
+.topbar {
+  height: var(--nav-h);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 24px;
+  border-bottom: 1px solid var(--gc-border);
+  background: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.topbar-left { display: flex; align-items: center; flex-shrink: 0; }
+
+.topbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.topbar-title {
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--gc-muted);
+  letter-spacing: -.01em;
+  white-space: nowrap;
+}
+
+.topbar-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+  justify-content: center;
+}
+
+.topbar-link {
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gc-muted);
+  transition: background .15s, color .15s;
+}
+.topbar-link:hover { background: var(--gc-hover); color: var(--gc-text); }
+.topbar-link.active {
+  background: #e8f0fe;
+  color: var(--gc-blue);
+}
+
+.topbar-right { flex-shrink: 0; }
+
+.topbar-semester {
+  font-size: 13px;
+  color: var(--gc-muted);
+  white-space: nowrap;
+  padding: 5px 12px;
+  border: 1px solid var(--gc-border);
+  border-radius: 16px;
+}

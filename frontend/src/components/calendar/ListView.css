@@ -1,0 +1,49 @@
+.list-view { padding: 8px 0; }
+
+.lv-day { margin-bottom: 24px; }
+
+.lv-day-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--gc-blue);
+  padding: 8px 20px 4px;
+  border-bottom: 1px solid var(--gc-border);
+  margin-bottom: 4px;
+}
+
+.lv-slots { display: flex; flex-direction: column; gap: 1px; }
+
+.lv-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 8px 20px;
+  transition: background .1s;
+  border-radius: 4px;
+}
+.lv-row:hover { background: var(--gc-hover); }
+
+.lv-slot-info {
+  flex-shrink: 0;
+  width: 56px;
+  text-align: right;
+  padding-top: 2px;
+}
+
+.lv-slot-num {
+  font-size: 22px;
+  font-weight: 300;
+  color: var(--gc-muted);
+  line-height: 1;
+}
+
+.lv-slot-time {
+  font-size: 10px;
+  color: #bdc1c6;
+  line-height: 1.6;
+  margin-top: 2px;
+}
+
+.lv-events { flex: 1; display: flex; flex-direction: column; gap: 4px; }

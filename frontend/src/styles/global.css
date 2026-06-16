@@ -1,0 +1,131 @@
+/* ── Design tokens (Google Calendar palette) ─────────────────── */
+:root {
+  --gc-blue:    #1a73e8;
+  --gc-blue-h:  #1557b0;
+  --gc-bg:      #ffffff;
+  --gc-surface: #f8f9fa;
+  --gc-border:  #dadce0;
+  --gc-text:    #202124;
+  --gc-muted:   #70757a;
+  --gc-hover:   #f1f3f4;
+  --gc-today:   #1a73e8;
+
+  /* lesson type palette (Google event colours) */
+  --cl-lec:    #4285F4;
+  --cl-prac:   #0F9D58;
+  --cl-lab:    #F4B400;
+  --cl-exam:   #DB4437;
+  --cl-credit: #E65100;
+  --cl-consul: #673AB7;
+
+  --font:   'Google Sans', 'Inter', system-ui, sans-serif;
+  --radius: 8px;
+  --nav-h:  64px;
+  --sidebar-w: 256px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font);
+  background: var(--gc-bg);
+  color: var(--gc-text);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; text-decoration: none; }
+
+button {
+  font-family: var(--font);
+  cursor: pointer;
+  border: none;
+  background: none;
+  outline: none;
+}
+
+select, input {
+  font-family: var(--font);
+  font-size: 14px;
+  outline: none;
+  background: #fff;
+  color: var(--gc-text);
+  border: 1px solid var(--gc-border);
+  border-radius: var(--radius);
+  padding: 6px 10px;
+  transition: border-color .15s, box-shadow .15s;
+}
+
+select:focus, input:focus {
+  border-color: var(--gc-blue);
+  box-shadow: 0 0 0 3px #1a73e820;
+}
+
+/* scrollbar */
+::-webkit-scrollbar { width: 7px; height: 7px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #bdc1c6; border-radius: 4px; }
+
+/* ── Utility ─────────────────────────────────────────────────── */
+.text-muted { color: var(--gc-muted); }
+.text-sm    { font-size: 12px; }
+.text-xs    { font-size: 11px; }
+.bold       { font-weight: 600; }
+.flex       { display: flex; }
+.gap-2      { gap: 8px; }
+.gap-3      { gap: 12px; }
+.items-center { align-items: center; }
+.w-full     { width: 100%; }
+
+/* ── Badge (lesson type chip) ────────────────────────────────── */
+.badge {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.badge-LEC    { background: #4285F420; color: #1558d6; }
+.badge-PRAC   { background: #0F9D5820; color: #0a6e40; }
+.badge-LAB    { background: #F4B40020; color: #a07a00; }
+.badge-EXAM   { background: #DB443720; color: #b31412; }
+.badge-CREDIT { background: #E6510020; color: #b03c00; }
+.badge-CONSUL { background: #673AB720; color: #4527a0; }
+
+/* ── Card ────────────────────────────────────────────────────── */
+.card {
+  background: #fff;
+  border: 1px solid var(--gc-border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+/* ── Btn primary ─────────────────────────────────────────────── */
+.btn-primary {
+  background: var(--gc-blue);
+  color: #fff;
+  border-radius: 24px;
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background .15s, box-shadow .15s;
+  box-shadow: 0 1px 3px #0002;
+}
+.btn-primary:hover { background: var(--gc-blue-h); box-shadow: 0 2px 6px #0003; }
+
+.btn-ghost {
+  border: 1px solid var(--gc-border);
+  border-radius: 24px;
+  padding: 6px 16px;
+  font-size: 13px;
+  color: var(--gc-text);
+  transition: background .15s;
+}
+.btn-ghost:hover { background: var(--gc-hover); }
+.btn-ghost.active {
+  background: #e8f0fe;
+  color: var(--gc-blue);
+  border-color: #c5d8f7;
+}
