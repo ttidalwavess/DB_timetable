@@ -110,3 +110,26 @@
   cursor: not-allowed;
   box-shadow: none;
 }
+
+
+.lf-hint {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    margin-top: 4px;
+}
+
+.lf-hint-info {
+    background: #e8f0fe;
+    color: var(--gc-blue);
+}
+
+.lf-hint-warning {
+    background: #fef3cd;
+    color: #856404;
+}
+
+.lf-hint-error {
+    background: #fce8e6;
+    color: #b31412;
+}

@@ -6,6 +6,7 @@ import SessionPage   from "./pages/SessionPage";
 import RoomsPage     from "./pages/RoomsPage";
 import TeachersPage  from "./pages/TeachersPage";
 import ReferencesPage from "./pages/admin/ReferencesPage";
+import ManageSchedulePage from "./pages/admin/ManageSchedulePage";
 import "./styles/global.css";
 
 export default function App() {
@@ -19,6 +20,7 @@ export default function App() {
         <Route path="/rooms"      element={<RoomsPage />} />
         <Route path="/teachers"   element={<TeachersPage />} />
         <Route path="/admin/references" element={<ReferencesPage />} />
+        <Route path="/admin/manage-schedule" element={<ManageSchedulePage />} />
       </Routes>
     </BrowserRouter>
   );

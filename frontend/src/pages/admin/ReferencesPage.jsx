@@ -8,13 +8,15 @@
 import { useState, useEffect } from "react";
 import { api } from "../../api";
 import "./ReferencesPage.css";
+import ManageSchedulePage from "./ManageSchedulePage";
 
 const TABS = [
-  { id: "departments", label: "Подразделения" },
-  { id: "curriculum",  label: "Учебные планы" },
-  { id: "teachers",    label: "Преподаватели" },
-  { id: "rooms",       label: "Аудитории" },
-  { id: "groups",      label: "Учебные группы" },
+    { id: "schedule",    label: "Управление расписанием" },
+    { id: "departments", label: "Подразделения" },
+    { id: "curriculum",  label: "Учебные планы" },
+    { id: "teachers",    label: "Преподаватели" },
+    { id: "rooms",       label: "Аудитории" },
+    { id: "groups",      label: "Учебные группы" },
 ];
 
 const GROUP_TYPE_LABELS = {
@@ -65,11 +67,12 @@ export default function ReferencesPage() {
         <div className="refs-state"><div className="sp-spinner" /></div>
       ) : (
         <div className="refs-body">
-          {tab === "departments" && <DepartmentsTab data={data} onEdit={onEdit} onDelete={onDelete} />}
-          {tab === "curriculum"  && <CurriculumTab  data={data} onEdit={onEdit} onDelete={onDelete} />}
-          {tab === "teachers"    && <TeachersTab    data={data} onEdit={onEdit} onDelete={onDelete} />}
-          {tab === "rooms"       && <RoomsTab       data={data} onEdit={onEdit} onDelete={onDelete} />}
-          {tab === "groups"      && <GroupsTab      data={data} onEdit={onEdit} onDelete={onDelete} />}
+            {tab === "schedule" && <ManageSchedulePage />}
+            {tab === "departments" && <DepartmentsTab data={data} onEdit={onEdit} onDelete={onDelete} />}
+            {tab === "curriculum"  && <CurriculumTab  data={data} onEdit={onEdit} onDelete={onDelete} />}
+            {tab === "teachers"    && <TeachersTab    data={data} onEdit={onEdit} onDelete={onDelete} />}
+            {tab === "rooms"       && <RoomsTab       data={data} onEdit={onEdit} onDelete={onDelete} />}
+            {tab === "groups"      && <GroupsTab      data={data} onEdit={onEdit} onDelete={onDelete} />}
         </div>
       )}
     </div>
