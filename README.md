@@ -1,69 +1,89 @@
-Если в `ReferencesPage.jsx` нужны школы/кафедры/академ. группы — добавить в `api/index.js`:
-```js
-getSchools:        async () => { await delay(); return SCHOOLS; },
-getDepartments:    async () => { await delay(); return DEPARTMENTS; },
-getAcademicGroups: async () => { await delay(); return ACADEMIC_GROUPS; },
-```
-(массивы `SCHOOLS`, `DEPARTMENTS`, `ACADEMIC_GROUPS` — в `mockData.js`, по аналогии с `TEACHERS`/`ROOMS`).
-Если этих данных пока нет — `ReferencesPage` покажет `EmptyState` без ошибок (есть `?.()` фоллбэки).
+# 🎓 Система Расписания ДВФУ
 
-4. Использование `LessonForm`
+Комплексное веб-приложение для составления, просмотра и аналитики учебного расписания университета. Проект разработан с использованием **React** (фронтенд) и **Node.js + PostgreSQL** (бэкенд).
 
-```jsx
-import LessonForm from "../components/forms/LessonForm";
+## 🌟 Ключевые возможности
 
-<LessonForm
-  initialLesson={editingLesson}      // null = создание нового
-  scheduleId={currentScheduleId}
-  context={{
-    rooms, studyGroups, teachers, teacherAssignments,
-    buildingDistances, lessons, slots, buildings, curriculumSubjects,
-  }}
-  onSaved={(lesson) => { /* обновить список, закрыть модалку */ }}
-  onCancel={() => setModalOpen(false)}
-/>
-```
-
-Все справочники для `context` уже есть в `api/index.js`:
-```js
-const [rooms, studyGroups, teachers, teacherAssignments, buildingDistances, slots, buildings] =
-  await Promise.all([
-    api.getRooms(), api.getStudyGroups(), api.getTeachers(),
-    api.getTeacherAssignments(), api.getBuildingDistances(),
-    api.getSlots(), api.getBuildings(),
-  ]);
-const lessons = await api.getLessons({ scheduleId: currentScheduleId });
-```
+1. **Многоуровневая структура:** Институты → Кафедры → Направления → Академические и Учебные группы.
+2. **Алгоритм диспетчеризации (Бэкенд):** При добавлении каждого занятия бэкенд автоматически вычисляет:
+   - Накладки преподавателей, групп и аудиторий с учетом *четности недель*.
+   - Лимиты по парам в день (не более 5 занятий).
+   - Транзитное время на переходы между разными корпусами университета.
+   - Физическую вместимость аудитории и соответствие типу занятия (лабораторные только в компьютерных классах и т.д.).
+3. **Безопасность (JWT):** Все административные функции закрыты токеном. 
+4. **Массовая генерация:** Наличие "Жадного алгоритма" для автоматической генерации сотен неконфликтующих занятий при тестировании.
+5. **Аналитические сводки:** Шахматка аудиторий, детальная нагрузка преподавателей и сессионное расписание (отдельные SQL-агрегации).
 
 ---
 
-5. Копирование расписания
+## 🛠 Технологии
 
-```jsx
-import CopyScheduleDialog from "../components/forms/CopyScheduleDialog";
-
-<CopyScheduleDialog
-  sourceSchedule={currentSchedule}
-  onCopied={({ schedule, copiedLessonsCount }) => {
-    alert(`Скопировано занятий: ${copiedLessonsCount}`);
-    // навигация на новое расписание: schedule.schedule_id
-  }}
-  onCancel={() => setDialogOpen(false)}
-/>
-```
-
-Валидация: пустое название, дубликат названия (проверяется по `SCHEDULES`), год ≥ 2000, семестр 1–12.
+- **Frontend:** React, React Router, Vanilla CSS, Fetch API.
+- **Backend:** Node.js, Express, Prisma ORM, JSON Web Tokens (JWT).
+- **База Данных:** PostgreSQL (16+ таблиц, 3-я нормальная форма).
 
 ---
 
-6. Маршрут `/admin/references`
+## 🚀 Запуск проекта
 
-В `App.jsx`:
-```jsx
-import ReferencesPage from "./pages/admin/ReferencesPage";
-// ...
-<Route path="/admin/references" element={<ReferencesPage />} />
-```
+### Шаг 1. Запуск Базы Данных
+Убедитесь, что у вас установлен PostgreSQL и работает сервис баз данных. Создайте базу данных с именем `bd_timetable`.
 
-Занятость преподавателей (`/teachers`) — уже реализована в твоём `TeachersPage.jsx`
-(подсветка `day-over` при > 5 пар/день), отдельной страницы делать не нужно.
+### Шаг 2. Запуск Бэкенда
+1. Откройте терминал и перейдите в папку бэкенда:
+   ```bash
+   cd backend
+   ```
+2. Установите зависимости:
+   ```bash
+   npm install
+   ```
+3. Создайте файл `.env` в папке `backend` со строкой подключения:
+   ```env
+   DATABASE_URL="postgresql://postgres:ВАШ_ПАРОЛЬ@localhost:5432/bd_timetable?schema=schedule"
+   JWT_SECRET="super_secret_key"
+   ```
+4. Сгенерируйте клиент базы данных и примените структуру:
+   ```bash
+   npx prisma generate
+   npx prisma db push
+   ```
+5. (Опционально) Сгенерируйте массированное тестовое расписание (около 120 пар без накладок):
+   ```bash
+   npm run seed:massive
+   ```
+6. Запустите сервер:
+   ```bash
+   npm run dev
+   ```
+   *Сервер будет доступен по адресу `http://localhost:3000`*
+
+### Шаг 3. Запуск Фронтенда
+1. Откройте новый терминал и перейдите в папку фронтенда:
+   ```bash
+   cd frontend
+   ```
+2. Установите зависимости:
+   ```bash
+   npm install
+   ```
+3. Запустите React-приложение:
+   ```bash
+   npm start
+   ```
+   *Сайт автоматически откроется по адресу `http://localhost:3001`*
+
+---
+
+## 🔐 Авторизация администратора
+
+Для тестирования функций добавления, изменения и удаления занятий необходимо авторизоваться.
+1. В правом верхнем углу сайта нажмите кнопку **"Войти"**.
+2. Введите учетные данные:
+   - Логин: `admin`
+   - Пароль: `admin`
+3. Успешный вход сохранит ваш JWT токен, и вы получите полный доступ ко всем функциям редактирования расписания.
+
+---
+
+**Разработано для сдачи курсового/дипломного проекта по Базам Данных.**

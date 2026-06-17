@@ -1,4 +1,6 @@
 import { NavLink } from "react-router-dom";
+import { useState, useEffect } from "react";
+import LoginModal from "../LoginModal";
 import "./Topbar.css";
 
 const LINKS = [
@@ -11,6 +13,20 @@ const LINKS = [
 ];
 
 export default function Topbar() {
+  const [showLogin, setShowLogin] = useState(false);
+  const [token, setToken] = useState(localStorage.getItem('token'));
+
+  const handleLogin = (newToken) => {
+    localStorage.setItem('token', newToken);
+    setToken(newToken);
+    setShowLogin(false);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setToken(null);
+  };
+
   return (
     <header className="topbar">
       <div className="topbar-left">
@@ -43,7 +59,18 @@ export default function Topbar() {
 
       <div className="topbar-right">
         <span className="topbar-semester">Весенний семестр 2025/26</span>
+        {token ? (
+          <button className="topbar-btn login" onClick={handleLogout}>Выйти</button>
+        ) : (
+          <button className="topbar-btn login" onClick={() => setShowLogin(true)}>Войти</button>
+        )}
       </div>
+      {showLogin && (
+        <LoginModal 
+          onClose={() => setShowLogin(false)} 
+          onLogin={handleLogin} 
+        />
+      )}
     </header>
   );
 }

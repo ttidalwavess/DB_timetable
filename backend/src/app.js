@@ -10,7 +10,17 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+const scheduleRouter = require('./routes/schedule');
+const referencesRouter = require('./routes/references');
+const authRouter = require('./routes/auth');
+const reportsRouter = require('./routes/reports');
+
 // Базовый маршрут API
+app.use('/api/auth', authRouter);
+app.use('/api/schedule', scheduleRouter);
+app.use('/api/refs', referencesRouter);
+app.use('/api/reports', reportsRouter);
+
 app.get('/api/test', async (req, res) => {
     try {
         // Пробуем достать данные из таблицы school (факультеты)
