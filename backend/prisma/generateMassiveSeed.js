@@ -51,11 +51,11 @@ async function generateData() {
   const buildingB = await prisma.building.create({ data: { building_name: 'Корпус Б (Лабораторный)', address: 'ул. Центральная, 2' } });
 
   const rooms = [];
-  for(let i=1; i<=SCALE.roomsPerBuilding; i++) {
-    rooms.push(await prisma.room.create({ data: { room_number: `А-10${i}`, room_type: 'LECTURE', capacity: 100, building_id: buildingA.building_id }}));
-    rooms.push(await prisma.room.create({ data: { room_number: `А-20${i}`, room_type: 'SEMINAR', capacity: 30, building_id: buildingA.building_id }}));
-    rooms.push(await prisma.room.create({ data: { room_number: `Б-10${i}`, room_type: 'LABORATORY', capacity: 20, building_id: buildingB.building_id }}));
-    rooms.push(await prisma.room.create({ data: { room_number: `Б-20${i}`, room_type: 'COMPUTER', capacity: 25, building_id: buildingB.building_id }}));
+  for (let i = 1; i <= SCALE.roomsPerBuilding; i++) {
+    rooms.push(await prisma.room.create({ data: { room_number: `А-10${i}`, room_type: 'LECTURE', capacity: 100, building_id: buildingA.building_id } }));
+    rooms.push(await prisma.room.create({ data: { room_number: `А-20${i}`, room_type: 'SEMINAR', capacity: 30, building_id: buildingA.building_id } }));
+    rooms.push(await prisma.room.create({ data: { room_number: `Б-10${i}`, room_type: 'LABORATORY', capacity: 20, building_id: buildingB.building_id } }));
+    rooms.push(await prisma.room.create({ data: { room_number: `Б-20${i}`, room_type: 'COMPUTER', capacity: 25, building_id: buildingB.building_id } }));
   }
 
   // 2. Предметы
@@ -71,13 +71,13 @@ async function generateData() {
   const assignments = [];
   const currSubjects = [];
 
-  for (let s=1; s<=SCALE.schools; s++) {
+  for (let s = 1; s <= SCALE.schools; s++) {
     const school = await prisma.school.create({ data: { school_name: `Институт №${s}` } });
-    
-    for (let d=1; d<=SCALE.depsPerSchool; d++) {
+
+    for (let d = 1; d <= SCALE.depsPerSchool; d++) {
       const dep = await prisma.department.create({ data: { department_name: `Кафедра ${s}-${d}`, school_id: school.school_id } });
-      
-      for (let t=1; t<=SCALE.teachersPerDep; t++) {
+
+      for (let t = 1; t <= SCALE.teachersPerDep; t++) {
         teachers.push(await prisma.teacher.create({
           data: {
             last_name: randomItem(MOCK_NAMES),
@@ -89,7 +89,7 @@ async function generateData() {
         }));
       }
 
-      for (let p=1; p<=SCALE.programsPerDep; p++) {
+      for (let p = 1; p <= SCALE.programsPerDep; p++) {
         const prog = await prisma.training_program.create({
           data: {
             program_name: `Направление ${s}-${d}-${p}`,
@@ -106,11 +106,11 @@ async function generateData() {
         curriculums.push(curr);
 
         // Привязываем 4 случайных предмета к плану
-        for (let i=0; i<4; i++) {
+        for (let i = 0; i < 4; i++) {
           const sub = randomItem(subjects);
           // чтобы не было дублей в плане
           if (currSubjects.find(cs => cs.curriculum_id === curr.curriculum_id && cs.subject_id === sub.subject_id)) continue;
-          
+
           const cs = await prisma.curriculum_subject.create({
             data: {
               curriculum_id: curr.curriculum_id,
@@ -142,7 +142,7 @@ async function generateData() {
         }
 
         // Группы
-        for (let g=1; g<=SCALE.groupsPerProgram; g++) {
+        for (let g = 1; g <= SCALE.groupsPerProgram; g++) {
           const ag = await prisma.academic_group.create({
             data: {
               group_name: `ГР-${s}${d}${p}-${g}`,
@@ -185,10 +185,10 @@ async function generateData() {
   const groupDayCount = {};
   const teacherDayCount = {};
 
-  for(let d=1; d<=6; d++) {
+  for (let d = 1; d <= 6; d++) {
     roomGrid[d] = {}; teacherGrid[d] = {}; groupGrid[d] = {};
     groupDayCount[d] = {}; teacherDayCount[d] = {};
-    for(let s=1; s<=8; s++) {
+    for (let s = 1; s <= 8; s++) {
       roomGrid[d][s] = {}; teacherGrid[d][s] = {}; groupGrid[d][s] = {};
     }
   }
@@ -201,7 +201,7 @@ async function generateData() {
     if (!curr) continue;
 
     const subjectsForGroup = currSubjects.filter(cs => cs.curriculum_id === curr.curriculum_id);
-    
+
     for (let cs of subjectsForGroup) {
       // Ищем препода для предмета
       const assignment = assignments.find(a => a.subj_id === cs.subj_id);
@@ -209,22 +209,22 @@ async function generateData() {
 
       // Хотим поставить 1 лекцию и 1 практику в неделю
       const requiredTypes = ['LEC', 'PRAC'];
-      
+
       for (let lType of requiredTypes) {
         let placed = false;
-        
+
         // Пытаемся найти окно
-        for (let day=1; day<=5 && !placed; day++) {
-          for (let slot=1; slot<=4 && !placed; slot++) { // пары с 1 по 4 (т.к. в БД только 4 слота)
-            
+        for (let day = 1; day <= 5 && !placed; day++) {
+          for (let slot = 1; slot <= 4 && !placed; slot++) { // пары с 1 по 4 (т.к. в БД только 4 слота)
+
             if (groupGrid[day][slot][sg.study_group_id]) continue;
             if (teacherGrid[day][slot][assignment.teacher_id]) continue;
             if ((groupDayCount[day][sg.study_group_id] || 0) >= 5) continue;
             if ((teacherDayCount[day][assignment.teacher_id] || 0) >= 5) continue;
 
             // Ищем свободную аудиторию
-            const availableRoom = rooms.find(r => 
-              !roomGrid[day][slot][r.room_id] && 
+            const availableRoom = rooms.find(r =>
+              !roomGrid[day][slot][r.room_id] &&
               r.capacity >= sg.student_count &&
               (lType === 'LEC' ? r.room_type === 'LECTURE' : r.room_type === 'SEMINAR')
             );
@@ -234,7 +234,7 @@ async function generateData() {
               groupGrid[day][slot][sg.study_group_id] = true;
               teacherGrid[day][slot][assignment.teacher_id] = true;
               roomGrid[day][slot][availableRoom.room_id] = true;
-              
+
               groupDayCount[day][sg.study_group_id] = (groupDayCount[day][sg.study_group_id] || 0) + 1;
               teacherDayCount[day][assignment.teacher_id] = (teacherDayCount[day][assignment.teacher_id] || 0) + 1;
 
@@ -266,16 +266,16 @@ async function generateData() {
   }
   // Массовая вставка частями, чтобы не перегрузить память
   const chunkSize = 500;
-  for (let i=0; i<newLessons.length; i+=chunkSize) {
+  for (let i = 0; i < newLessons.length; i += chunkSize) {
     try {
-      await prisma.lesson.createMany({ data: newLessons.slice(i, i+chunkSize) });
-    } catch(e) {
+      await prisma.lesson.createMany({ data: newLessons.slice(i, i + chunkSize) });
+    } catch (e) {
       console.error("Ошибка при вставке:", e);
       throw e;
     }
   }
 
-  console.log("✅ БАЗА ДАННЫХ УСПЕШНО СГЕНЕРИРОВАНА!");
+  console.log("БАЗА ДАННЫХ УСПЕШНО СГЕНЕРИРОВАНА!");
   console.log(`Создано: Институтов - ${SCALE.schools}, Групп - ${studyGroups.length}, Занятий - ${newLessons.length}`);
 }
 

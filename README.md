@@ -47,6 +47,7 @@
    ```bash
    npx prisma generate
    npx prisma db push
+   npx prisma db seed
    ```
 5. (Опционально) Сгенерируйте массированное тестовое расписание (около 120 пар без накладок):
    ```bash
