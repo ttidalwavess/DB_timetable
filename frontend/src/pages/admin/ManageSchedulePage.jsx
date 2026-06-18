@@ -24,6 +24,7 @@ export default function ManageSchedulePage() {
     const [schedules, setSchedules] = useState([]);
     const [buildings, setBuildings] = useState([]);
     const [buildingDistances, setBuildingDistances] = useState([]);
+    const [curriculumSubjects, setCurriculumSubjects] = useState([]);
 
     // Редактирование
     const [editingLesson, setEditingLesson] = useState(null);
@@ -45,7 +46,8 @@ export default function ManageSchedulePage() {
             api.getSchedules(),
             api.getBuildings(),
             api.getBuildingDistances(),
-        ]).then(([g, t, r, s, a, sch, b, bd]) => {
+            api.getCurriculumSubjects(),
+        ]).then(([g, t, r, s, a, sch, b, bd, cs]) => {
             setGroups(g);
             setTeachers(t);
             setRooms(r);
@@ -54,6 +56,7 @@ export default function ManageSchedulePage() {
             setSchedules(sch);
             setBuildings(b);
             setBuildingDistances(bd);
+            setCurriculumSubjects(cs);
         });
     }, []);
 
@@ -130,7 +133,7 @@ export default function ManageSchedulePage() {
         teachers,
         buildings,
         subjects,
-        curriculumSubjects: [],
+        curriculumSubjects,
     };
 
     // Группировка занятий по дням

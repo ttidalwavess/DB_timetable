@@ -1,5 +1,38 @@
 const prisma = require('../prismaClient');
 
+// --- Schools (Школы/Институты) ---
+
+async function getSchools(req, res) {
+  try {
+    const schools = await prisma.school.findMany();
+    res.json(schools);
+  } catch (error) {
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+}
+
+// --- Subjects & Curriculum (Дисциплины и учебные планы) ---
+
+async function getSubjects(req, res) {
+  try {
+    const subjects = await prisma.subject.findMany();
+    res.json(subjects);
+  } catch (error) {
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+}
+
+async function getCurriculumSubjects(req, res) {
+  try {
+    const cs = await prisma.curriculum_subject.findMany({
+      include: { subject: true }
+    });
+    res.json(cs);
+  } catch (error) {
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+}
+
 // --- Departments (Подразделения) ---
 
 async function getDepartments(req, res) {
@@ -36,6 +69,17 @@ async function deleteDepartment(req, res) {
 }
 
 // --- Teachers (Преподаватели) ---
+
+async function getTeacherAssignments(req, res) {
+  try {
+    const assignments = await prisma.teacher_assignment.findMany({
+      include: { teacher: true }
+    });
+    res.json(assignments);
+  } catch (error) {
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+}
 
 async function getTeachers(req, res) {
   try {
@@ -81,6 +125,15 @@ async function deleteTeacher(req, res) {
 
 // --- Rooms (Помещения) ---
 
+async function getBuildings(req, res) {
+  try {
+    const buildings = await prisma.building.findMany();
+    res.json(buildings);
+  } catch (error) {
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+}
+
 async function getRooms(req, res) {
   try {
     const rooms = await prisma.room.findMany({
@@ -116,6 +169,15 @@ async function deleteRoom(req, res) {
 
 // --- Study Groups (Учебные группы) ---
 
+async function getAcademicGroups(req, res) {
+  try {
+    const groups = await prisma.academic_group.findMany();
+    res.json(groups);
+  } catch (error) {
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+}
+
 async function getStudyGroups(req, res) {
   try {
     const groups = await prisma.study_group.findMany({
@@ -150,8 +212,9 @@ async function deleteStudyGroup(req, res) {
 }
 
 module.exports = {
+  getSchools, getSubjects, getCurriculumSubjects,
   getDepartments, createDepartment, deleteDepartment,
-  getTeachers, createTeacher, deleteTeacher,
-  getRooms, createRoom, deleteRoom,
-  getStudyGroups, createStudyGroup, deleteStudyGroup
+  getTeachers, createTeacher, deleteTeacher, getTeacherAssignments,
+  getBuildings, getRooms, createRoom, deleteRoom,
+  getAcademicGroups, getStudyGroups, createStudyGroup, deleteStudyGroup
 };

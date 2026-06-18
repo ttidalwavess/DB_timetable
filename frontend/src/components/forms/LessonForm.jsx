@@ -70,9 +70,9 @@ export default function LessonForm({
         : context.teacherAssignments;
 
     // Получаем название дисциплины
-    const getSubjectName = (subjectId) => {
-        const subject = context.subjects?.find(s => s.subject_id === Number(subjectId));
-        return subject?.subject_name || "";
+    const getSubjectName = (subjId) => {
+        const cs = context.curriculumSubjects?.find(c => c.subj_id === Number(subjId));
+        return cs?.subject?.subject_name || "";
     };
 
     // Получаем имя преподавателя
@@ -142,7 +142,7 @@ export default function LessonForm({
             onSaved?.(saved);
         } catch (err) {
             if (err.conflicts) {
-                setSubmitError(`Конфликты: ${err.conflicts.map(c => c.text).join("; ")}`);
+                setSubmitError(`Конфликты: ${err.conflicts.map(c => typeof c === 'string' ? c : c.text).join("; ")}`);
             } else {
                 setSubmitError(err.message || "Ошибка сохранения");
             }
@@ -176,9 +176,9 @@ export default function LessonForm({
                     onChange={e => set("subj_id", e.target.value)}
                 >
                     <option value="">Выберите дисциплину</option>
-                    {context.subjects?.map(s => (
-                        <option key={s.subject_id} value={s.subject_id}>
-                            {s.subject_name}
+                    {context.curriculumSubjects?.map(cs => (
+                        <option key={cs.subj_id} value={cs.subj_id}>
+                            {cs.subject?.subject_name}
                         </option>
                     ))}
                 </select>

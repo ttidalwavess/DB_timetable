@@ -48,6 +48,27 @@ const getActiveScheduleId = async () => {
 export const api = {
   getSlots:       async () => { await delay(); return SLOTS; },
   getDays:        async () => { await delay(); return DAYS_OF_WEEK; },
+  getSchools: async () => {
+    try {
+      const res = await fetch('/api/refs/schools');
+      if (res.ok) return await res.json();
+    } catch(e) {}
+    return [];
+  },
+  getDepartments: async () => {
+    try {
+      const res = await fetch('/api/refs/departments');
+      if (res.ok) return await res.json();
+    } catch(e) {}
+    return [];
+  },
+  getAcademicGroups: async () => {
+    try {
+      const res = await fetch('/api/refs/academic-groups');
+      if (res.ok) return await res.json();
+    } catch(e) {}
+    return [];
+  },
   getStudyGroups: async () => { 
     try {
       const res = await fetch('/api/refs/groups');
@@ -69,11 +90,35 @@ export const api = {
     } catch(e) {}
     return ROOMS; 
   },
-  getBuildings:   async () => { await delay(); return BUILDINGS; },
-  getSubjects:    async () => { await delay(); return SUBJECTS; },
-  getTeacherAssignments: async () => { await delay(); return TEACHER_ASSIGNMENTS; },
+  getBuildings:   async () => { 
+    try {
+      const res = await fetch('/api/refs/buildings');
+      if (res.ok) return await res.json();
+    } catch(e) {}
+    return BUILDINGS; 
+  },
+  getSubjects: async () => {
+    try {
+      const res = await fetch('/api/refs/subjects');
+      if (res.ok) return await res.json();
+    } catch(e) {}
+    return [];
+  },
+  getTeacherAssignments: async () => {
+    try {
+      const res = await fetch('/api/refs/assignments');
+      if (res.ok) return await res.json();
+    } catch(e) {}
+    return [];
+  },
   getBuildingDistances:  async () => { await delay(); return BUILDING_DISTANCES; },
-  getCurriculumSubjects: async () => { await delay(); return CURRICULUM_SUBJECTS; },
+  getCurriculumSubjects: async () => {
+    try {
+      const res = await fetch('/api/refs/curriculum-subjects');
+      if (res.ok) return await res.json();
+    } catch(e) {}
+    return [];
+  },
   getSchedules:   async () => { 
     try {
       const res = await fetch('/api/schedule');
@@ -392,6 +437,15 @@ export const api = {
         },
         body: JSON.stringify(lesson)
       });
+      if (res.status === 401 || res.status === 403) {
+        throw new Error("Пожалуйста, авторизуйтесь для редактирования");
+      }
+      if (res.status === 422) {
+        const errorData = await res.json();
+        const err = new Error("CONFLICTS");
+        err.conflicts = errorData.conflicts;
+        throw err;
+      }
       if (!res.ok) {
         throw new Error("Ошибка при добавлении занятия");
       }
@@ -415,6 +469,8 @@ export const api = {
           typeInfo
       };
     } catch(e) {
+      if (e.message === "CONFLICTS") throw e;
+      if (e.message === "Пожалуйста, авторизуйтесь для редактирования") throw e;
       console.warn("Backend unavailable or error", e);
       // Fallback for mock if backend fails completely
       const conflicts = await api.checkConflicts({ ...lesson, lesson_id: null });
@@ -446,6 +502,9 @@ export const api = {
         },
         body: JSON.stringify(patch)
       });
+      if (res.status === 401 || res.status === 403) {
+        throw new Error("Пожалуйста, авторизуйтесь для редактирования");
+      }
       if (res.status === 422) {
         const errorData = await res.json();
         const err = new Error("CONFLICTS");
@@ -476,6 +535,7 @@ export const api = {
       };
     } catch(e) {
       if (e.message === "CONFLICTS") throw e;
+      if (e.message === "Пожалуйста, авторизуйтесь для редактирования") throw e;
       console.warn("Backend unavailable or error", e);
       // Фолбэк на мок-логику если бэкенд не ответил
       await delay(150);
@@ -509,8 +569,12 @@ export const api = {
           ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         }
       });
+      if (res.status === 401 || res.status === 403) {
+        throw new Error("Пожалуйста, авторизуйтесь для редактирования");
+      }
       if (res.ok) return { ok: true };
     } catch (e) {
+      if (e.message === "Пожалуйста, авторизуйтесь для редактирования") throw e;
       console.warn("Backend unavailable for delete", e);
     }
     // Фолбэк

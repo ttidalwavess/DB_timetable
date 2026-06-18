@@ -46,8 +46,7 @@ export default function ReferencesPage() {
     });
   }, []);
 
-  const onEdit   = (entity, item) => alert(`TODO: редактировать ${entity} #${item.id ?? item[Object.keys(item)[0]]}`);
-  const onDelete = (entity, item) => alert(`TODO: удалить ${entity} #${item.id ?? item[Object.keys(item)[0]]}`);
+  // Справочники отображаются в режиме "только чтение"
 
   return (
     <div className="refs-page">
@@ -68,11 +67,11 @@ export default function ReferencesPage() {
       ) : (
         <div className="refs-body">
             {tab === "schedule" && <ManageSchedulePage />}
-            {tab === "departments" && <DepartmentsTab data={data} onEdit={onEdit} onDelete={onDelete} />}
-            {tab === "curriculum"  && <CurriculumTab  data={data} onEdit={onEdit} onDelete={onDelete} />}
-            {tab === "teachers"    && <TeachersTab    data={data} onEdit={onEdit} onDelete={onDelete} />}
-            {tab === "rooms"       && <RoomsTab       data={data} onEdit={onEdit} onDelete={onDelete} />}
-            {tab === "groups"      && <GroupsTab      data={data} onEdit={onEdit} onDelete={onDelete} />}
+            {tab === "departments" && <DepartmentsTab data={data} />}
+            {tab === "curriculum"  && <CurriculumTab  data={data} />}
+            {tab === "teachers"    && <TeachersTab    data={data} />}
+            {tab === "rooms"       && <RoomsTab       data={data} />}
+            {tab === "groups"      && <GroupsTab      data={data} />}
         </div>
       )}
     </div>
@@ -80,7 +79,7 @@ export default function ReferencesPage() {
 }
 
 // ── Вкладка: Подразделения — дерево Школа → Кафедры ─────────────────────
-function DepartmentsTab({ data, onEdit, onDelete }) {
+function DepartmentsTab({ data }) {
   const schools = data.schools || [];
   const departments = data.departments || [];
 
@@ -94,10 +93,6 @@ function DepartmentsTab({ data, onEdit, onDelete }) {
         <div key={school.school_id} className="refs-tree-school">
           <div className="refs-tree-row refs-tree-school-row">
             <span className="refs-tree-name">🏛 {school.school_name}</span>
-            <div className="refs-row-actions">
-              <button className="btn-ghost" onClick={() => onEdit("school", school)}>Изменить</button>
-              <button className="btn-ghost" onClick={() => onDelete("school", school)}>Удалить</button>
-            </div>
           </div>
           <div className="refs-tree-children">
             {departments
@@ -105,10 +100,6 @@ function DepartmentsTab({ data, onEdit, onDelete }) {
               .map(dep => (
                 <div key={dep.department_id} className="refs-tree-row refs-tree-dep-row">
                   <span className="refs-tree-name">— {dep.department_name}</span>
-                  <div className="refs-row-actions">
-                    <button className="btn-ghost" onClick={() => onEdit("department", dep)}>Изменить</button>
-                    <button className="btn-ghost" onClick={() => onDelete("department", dep)}>Удалить</button>
-                  </div>
                 </div>
               ))}
           </div>
@@ -119,7 +110,7 @@ function DepartmentsTab({ data, onEdit, onDelete }) {
 }
 
 // ── Вкладка: Учебные планы — таблица дисциплин с часами ─────────────────
-function CurriculumTab({ data, onEdit, onDelete }) {
+function CurriculumTab({ data }) {
   const items = data.curriculumSubjects || [];
   const subjects = data.subjects || [];
 
@@ -138,7 +129,6 @@ function CurriculumTab({ data, onEdit, onDelete }) {
           <th>Лабораторные</th>
           <th>Отчётность</th>
           <th>ЗЕТ</th>
-          <th></th>
         </tr>
       </thead>
       <tbody>
@@ -151,10 +141,6 @@ function CurriculumTab({ data, onEdit, onDelete }) {
             <td className="text-center">{cs.lab_hours}</td>
             <td>{cs.report_type === "EXAM" ? "Экзамен" : cs.report_type === "CREDIT" ? "Зачёт" : "Экзамен + зачёт"}</td>
             <td className="text-center">{cs.credit_units}</td>
-            <td className="refs-row-actions">
-              <button className="btn-ghost" onClick={() => onEdit("curriculum_subject", cs)}>Изменить</button>
-              <button className="btn-ghost" onClick={() => onDelete("curriculum_subject", cs)}>Удалить</button>
-            </td>
           </tr>
         ))}
       </tbody>
@@ -163,7 +149,7 @@ function CurriculumTab({ data, onEdit, onDelete }) {
 }
 
 // ── Вкладка: Преподаватели ────────────────────────────────────────────
-function TeachersTab({ data, onEdit, onDelete }) {
+function TeachersTab({ data }) {
   const teachers = data.teachers || [];
   const departments = data.departments || [];
 
@@ -179,7 +165,6 @@ function TeachersTab({ data, onEdit, onDelete }) {
           <th>Кафедра</th>
           <th>Степень / звание</th>
           <th>Должность</th>
-          <th></th>
         </tr>
       </thead>
       <tbody>
@@ -191,10 +176,6 @@ function TeachersTab({ data, onEdit, onDelete }) {
               {[t.academic_degree, t.academic_rank].filter(Boolean).join(", ") || "—"}
             </td>
             <td>{t.position}</td>
-            <td className="refs-row-actions">
-              <button className="btn-ghost" onClick={() => onEdit("teacher", t)}>Изменить</button>
-              <button className="btn-ghost" onClick={() => onDelete("teacher", t)}>Удалить</button>
-            </td>
           </tr>
         ))}
       </tbody>
@@ -203,7 +184,7 @@ function TeachersTab({ data, onEdit, onDelete }) {
 }
 
 // ── Вкладка: Аудитории ─────────────────────────────────────────────────
-function RoomsTab({ data, onEdit, onDelete }) {
+function RoomsTab({ data }) {
   const rooms = data.rooms || [];
   const buildings = data.buildings || [];
 
@@ -219,7 +200,6 @@ function RoomsTab({ data, onEdit, onDelete }) {
           <th>Корпус</th>
           <th>Тип</th>
           <th>Вместимость</th>
-          <th></th>
         </tr>
       </thead>
       <tbody>
@@ -229,10 +209,6 @@ function RoomsTab({ data, onEdit, onDelete }) {
             <td>{buildingName(r.building_id)}</td>
             <td><span className="badge badge-LEC">{ROOM_TYPE_LABEL(r.room_type)}</span></td>
             <td className="text-center">{r.is_online ? "Онлайн" : r.capacity}</td>
-            <td className="refs-row-actions">
-              <button className="btn-ghost" onClick={() => onEdit("room", r)}>Изменить</button>
-              <button className="btn-ghost" onClick={() => onDelete("room", r)}>Удалить</button>
-            </td>
           </tr>
         ))}
       </tbody>
@@ -248,7 +224,7 @@ function ROOM_TYPE_LABEL(type) {
 }
 
 // ── Вкладка: Учебные группы ────────────────────────────────────────────
-function GroupsTab({ data, onEdit, onDelete }) {
+function GroupsTab({ data }) {
   const studyGroups = data.studyGroups || [];
   const academicGroups = data.academicGroups || [];
 
@@ -264,7 +240,6 @@ function GroupsTab({ data, onEdit, onDelete }) {
           <th>Тип</th>
           <th>Студентов</th>
           <th>Академическая группа</th>
-          <th></th>
         </tr>
       </thead>
       <tbody>
@@ -274,10 +249,6 @@ function GroupsTab({ data, onEdit, onDelete }) {
             <td><span className="badge badge-PRAC">{GROUP_TYPE_LABELS[g.group_type] ?? g.group_type}</span></td>
             <td className="text-center">{g.student_count}</td>
             <td className="text-muted">{academicName(g.academic_group_id)}</td>
-            <td className="refs-row-actions">
-              <button className="btn-ghost" onClick={() => onEdit("study_group", g)}>Изменить</button>
-              <button className="btn-ghost" onClick={() => onDelete("study_group", g)}>Удалить</button>
-            </td>
           </tr>
         ))}
       </tbody>
